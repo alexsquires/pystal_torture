@@ -62,46 +62,6 @@ def index_sites(structure, species=None, labels=None):
     else:
         raise ValueError("Need to supply either specie, or label to index_sites")
 
-
-def sort_structure(structure, order):
-    """ 
-    Given a pymatgen structure object sort the species so that their indices
-    sit side by side in the structure, in given order - allows for POSCAR file to 
-    be written in a readable way after doping
-
-    Args:
-       - structure (Structure): pymatgen structure object
-       - order ([str,str..]): list of species str in order to sort
-
-    Returns:
-       - structure (Structure): ordered pymatgen Structure object
-    """
-
-    symbols = [species for species in structure.symbol_set]
-
-    if "X" in set(symbols):
-        symbols.remove("X")
-        symbols.append("X0+")
-
-    if set(symbols) == set(order):
-        structure_sorted = Structure(lattice=structure.lattice, species=[], coords=[])
-        for symbol in symbols:
-            for i, site in enumerate(structure.sites):
-                if site.species_string == symbol:
-                    structure_sorted.append(
-                        symbol,
-                        site.coords,
-                        coords_are_cartesian=True,
-                        properties=site.properties,
-                    )
-    else:
-        error_msg = "Error: sort structure elements in list passed in order does not match that found in POSCAR\n"
-        error_msg += "Passed: {}\n".format(order)
-        error_msg += "POSCAR: {}\n".format(symbols)
-        raise ValueError(error_msg)
-    return structure_sorted
-
-
 def dope_structure(
     structure, conc, species_to_rem, species_to_insert, label_to_remove=None
 ):
@@ -130,10 +90,7 @@ def dope_structure(
         for species in species_to_insert:
             for dopant in range(no_dopants):
                 structure[site_indices.pop()] = species
-        structure = sort_structure(
-            structure=structure, order=[species for species in structure.symbol_set]
-        )
-        return structure
+        return structure.get_sorted_structure()
     else:
         raise ValueError("dope_structure: species_to_rem is not in structure")
 
